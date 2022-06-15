@@ -1,0 +1,111 @@
+
+using System.Data;
+using System.Text;
+using System.Data.OleDb;
+using System.Windows.Forms;
+
+namespace ReadExcel
+{
+
+    internal class ReadExcelData
+    {
+        
+        public static DataSet ReadExcelDataFromExcel(string FilePath, string SheetName,  string FileExtension, string WhereClause = "", int RowsToBeReturned = 0, bool WithWhereClause = false)
+        {
+            string dataSource = string.Empty;
+            string fullPath = FilePath + FileExtension;
+            DataSet dataSet = null;
+            StringBuilder sbQuery = new StringBuilder("SELECT ");
+            //folderFiles = Directory.GetFiles(FilePath, FileExtension);
+            if (RowsToBeReturned.Equals(0))
+            {
+                sbQuery.Append("* FROM ");
+
+            }
+
+            else if (RowsToBeReturned > 0)
+            {
+                sbQuery.Append("TOP " + RowsToBeReturned + " * FROM ");
+            }
+
+            sbQuery.Append("[" + SheetName.Trim() + "$A1:BJ]");
+            if (WithWhereClause)
+            {
+                sbQuery.Append(" WHERE " + WhereClause);
+            }
+            if (dataSet != null)
+            {
+                dataSet.Dispose();
+            }
+            dataSet = new DataSet();
+            dataSource = String.Format("Provider=Microsoft.ACE.OLEDB.12.0;Data Source={0};Extended Properties='Excel 12.0;HDR=Yes;';", fullPath);
+            using (OleDbConnection oleDbConnection = new OleDbConnection(dataSource))
+            {
+                oleDbConnection.Open();
+                using (OleDbCommand oleDbCommand = new OleDbCommand(sbQuery.ToString(), oleDbConnection))
+                {
+                    oleDbCommand.CommandType = CommandType.Text;
+
+                    using (OleDbDataAdapter oleDbDataAdapter = new OleDbDataAdapter(oleDbCommand))
+                    {
+                        
+                        oleDbDataAdapter.Fill(dataSet);
+                        
+                    }
+                }
+            }
+            dataSet.Dispose();
+            ReadCountryDataFromExcel(dataSet);
+            return dataSet;
+
+        }
+
+        public static DataSet  ReadCountryDataFromExcel(DataSet dataSet)
+        {
+            
+            Console.WriteLine("Enter Year");
+            int year = int.Parse(Console.ReadLine());
+            String stYear;
+            stYear = year.ToString();
+
+
+            for (int excelRowNum = 1; excelRowNum < dataSet.Tables[0].Rows.Count; excelRowNum++)
+            {
+                if(dataSet.Tables[0].Rows[excelRowNum][stYear] != DBNull.Value) 
+                {
+                    //dataSet.Tables[0].DefaultView.RowFilter = stYear.ma
+
+                    string minValue = dataSet.Tables[0].AsEnumerable().Min(row => row[stYear]).ToString();
+                    string maxValue = dataSet.Tables[0].AsEnumerable().Max(row => row[stYear]).ToString();
+                }
+            }
+            AddFormulaToExcel(dataSet);
+            return null;
+                
+
+        }
+        public static DataSet AddFormulaToExcel(DataSet dataSet)
+        {
+            return null;
+        }
+
+
+            public static void Main(string[] args)
+        {
+            string filePath= "C:\\Users\\Dell\\Downloads\\ProgrammingExerciseData";
+            string sheetName = "World Population Data";
+            string fileExtension = ".xlsx";
+            ReadExcelDataFromExcel(filePath, sheetName, fileExtension);
+             
+
+
+        }
+
+
+
+    }
+
+
+
+
+}
